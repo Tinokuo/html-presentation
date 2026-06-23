@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>HTML 的不合理有效性 — 事件盤點簡報</title>
+<meta name="description" content="2026 年 5 月，Anthropic 工程師 Thariq Shihipar 主張用 HTML 取代 Markdown 作為 AI 產出格式的事件盤點。" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{
+    --ink:#0d1015;
+    --ink-2:#12161e;
+    --surface:rgba(255,255,255,.045);
+    --surface-line:rgba(255,255,255,.10);
+    --fg:#f3f5f8;
+    --fg-muted:#9aa6b8;
+    --fg-dim:#697184;
+    --html:#ff6a45;      /* HTML — the "winner" accent */
+    --html-soft:rgba(255,106,69,.14);
+    --md:#5bc8c0;        /* Markdown — cool contrast */
+    --md-soft:rgba(91,200,192,.12);
+    --gold:#f2b134;
+    --sans:'Space Grotesk','Noto Sans TC',system-ui,sans-serif;
+    --zh:'Noto Sans TC',system-ui,sans-serif;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+  }
+  html,body{height:100%}
+  body{
+    background:
+      radial-gradient(1200px 700px at 78% -8%, rgba(255,106,69,.10), transparent 60%),
+      radial-gradient(1000px 700px at 8% 108%, rgba(91,200,192,.09), transparent 55%),
+      var(--ink);
+    color:var(--fg);
+    font-family:var(--zh);
+    overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+  /* faint grid texture */
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+    background-image:
+      linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);
+    background-size:64px 64px;
+    mask-image:radial-gradient(circle at 50% 45%,#000 30%,transparent 85%);
+  }
+
+  /* ---------- progress + chrome ---------- */
+  .progress{position:fixed;top:0;left:0;height:3px;background:var(--html);width:0;z-index:30;transition:width .45s cubic-bezier(.4,0,.2,1);box-shadow:0 0 12px rgba(255,106,69,.6)}
+  .topbar{position:fixed;top:0;left:0;right:0;z-index:20;display:flex;justify-content:space-between;align-items:center;padding:22px clamp(20px,4vw,56px);font-family:var(--mono);font-size:12px;letter-spacing:.12em;color:var(--fg-dim);text-transform:uppercase}
+  .topbar .tag{color:var(--fg-muted)}
+  .topbar .tag b{color:var(--html);font-weight:700}
+  .counter b{color:var(--fg)}
+
+  /* ---------- deck / slides ---------- */
+  .deck{position:relative;width:100vw;height:100vh;height:100dvh;z-index:1}
+  .slide{
+    position:absolute;inset:0;
+    display:flex;flex-direction:column;justify-content:center;
+    padding:clamp(64px,8vh,110px) clamp(22px,7vw,120px);
+    opacity:0;visibility:hidden;transform:translateY(26px) scale(.99);
+    transition:opacity .5s ease,transform .55s cubic-bezier(.2,.7,.2,1),visibility .5s;
+    overflow:auto;
+  }
+  .slide.active{opacity:1;visibility:visible;transform:none}
+  .slide.active .stagger{animation:rise .65s cubic-bezier(.2,.7,.2,1) backwards}
+  .slide.active .stagger:nth-child(1){animation-delay:.05s}
+  .slide.active .stagger:nth-child(2){animation-delay:.13s}
+  .slide.active .stagger:nth-child(3){animation-delay:.21s}
+  .slide.active .stagger:nth-child(4){animation-delay:.29s}
+  .slide.active .stagger:nth-child(5){animation-delay:.37s}
+  .slide.active .stagger:nth-child(6){animation-delay:.45s}
+  @keyframes rise{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
+  .wrap{width:100%;max-width:1180px;margin:0 auto}
+
+  .eyebrow{font-family:var(--mono);font-size:clamp(11px,1.1vw,13px);letter-spacing:.22em;text-transform:uppercase;color:var(--html);margin-bottom:22px;display:flex;align-items:center;gap:12px}
+  .eyebrow::before{content:"";width:34px;height:2px;background:var(--html);display:inline-block}
+  h1{font-family:var(--sans);font-weight:900;font-size:clamp(40px,7.4vw,104px);line-height:1.02;letter-spacing:-.01em}
+  h2{font-family:var(--sans);font-weight:700;font-size:clamp(30px,4.6vw,62px);line-height:1.08;letter-spacing:-.01em;margin-bottom:10px}
+  .lead{font-size:clamp(17px,2vw,25px);color:var(--fg-muted);line-height:1.55;font-weight:400;max-width:46ch}
+  .kicker{font-family:var(--mono);font-size:13px;color:var(--fg-dim);letter-spacing:.05em}
+  .accent{color:var(--html)}
+  .md-c{color:var(--md)}
+  .gold{color:var(--gold)}
+
+  /* cover */
+  .cover h1 .ueh{display:block}
+  .cover .sub{margin-top:28px;font-size:clamp(18px,2.3vw,28px);color:var(--fg);font-weight:500}
+  .cover .en{margin-top:14px;font-family:var(--mono);color:var(--fg-dim);font-size:clamp(13px,1.4vw,16px);letter-spacing:.04em}
+  .cover .meta{margin-top:48px;display:flex;gap:14px;flex-wrap:wrap}
+  .chip{font-family:var(--mono);font-size:12px;letter-spacing:.08em;color:var(--fg-muted);border:1px solid var(--surface-line);background:var(--surface);padding:9px 15px;border-radius:999px}
+
+  /* facts row */
+  .facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:18px;margin-top:42px}
+  .fact{background:var(--surface);border:1px solid var(--surface-line);border-radius:16px;padding:24px 22px}
+  .fact .n{font-family:var(--sans);font-weight:700;font-size:clamp(26px,3.4vw,40px);color:var(--fg);line-height:1}
+  .fact .l{margin-top:10px;font-size:14px;color:var(--fg-muted);line-height:1.45}
+
+  /* quote / claim */
+  .claim{border-left:4px solid var(--html);padding:6px 0 6px 28px;margin:30px 0;font-family:var(--sans);font-weight:600;font-size:clamp(24px,3.4vw,46px);line-height:1.18;letter-spacing:-.01em}
+  .points{margin-top:26px;display:grid;gap:16px}
+  .point{display:flex;gap:16px;align-items:flex-start;font-size:clamp(15px,1.7vw,20px);color:var(--fg-muted);line-height:1.5}
+  .point .dot{flex:0 0 auto;width:9px;height:9px;border-radius:50%;background:var(--html);margin-top:.55em}
+  .point b{color:var(--fg);font-weight:700}
+
+  /* 5 reasons grid */
+  .reasons{display:grid;grid-template-columns:repeat(auto-fit,minmax(255px,1fr));gap:18px;margin-top:34px}
+  .reason{background:var(--surface);border:1px solid var(--surface-line);border-radius:16px;padding:24px;position:relative;overflow:hidden}
+  .reason::after{content:attr(data-n);position:absolute;right:14px;top:6px;font-family:var(--sans);font-weight:700;font-size:62px;color:rgba(255,255,255,.05);line-height:1}
+  .reason h3{font-family:var(--sans);font-size:20px;font-weight:700;margin-bottom:9px;display:flex;align-items:center;gap:10px}
+  .reason h3 i{font-style:normal;color:var(--html);font-family:var(--mono);font-size:14px}
+  .reason p{font-size:14.5px;color:var(--fg-muted);line-height:1.5}
+
+  /* versus table */
+  .versus{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:34px}
+  .col{border:1px solid var(--surface-line);border-radius:18px;padding:28px;background:var(--surface)}
+  .col.md{border-color:rgba(91,200,192,.35);background:var(--md-soft)}
+  .col.html{border-color:rgba(255,106,69,.4);background:var(--html-soft)}
+  .col .h{font-family:var(--mono);font-size:14px;letter-spacing:.06em;margin-bottom:6px}
+  .col.md .h{color:var(--md)}
+  .col.html .h{color:var(--html)}
+  .col .when{font-family:var(--sans);font-weight:700;font-size:clamp(18px,2vw,24px);margin-bottom:16px;color:var(--fg)}
+  .col ul{list-style:none;display:grid;gap:11px}
+  .col li{font-size:15px;color:var(--fg-muted);line-height:1.45;padding-left:20px;position:relative}
+  .col li::before{content:"›";position:absolute;left:0;color:inherit;opacity:.6}
+  .col.md li::before{color:var(--md)}
+  .col.html li::before{color:var(--html)}
+  .takeaway{margin-top:24px;font-size:clamp(15px,1.7vw,19px);color:var(--fg);text-align:center;font-weight:500}
+  .takeaway b{color:var(--gold)}
+
+  /* sources */
+  .srclist{margin-top:30px;display:grid;gap:14px;max-width:880px}
+  .src{display:flex;gap:16px;align-items:baseline;padding:16px 18px;border:1px solid var(--surface-line);border-radius:12px;background:var(--surface);text-decoration:none;transition:border-color .2s,transform .2s}
+  .src:hover{border-color:var(--html);transform:translateX(4px)}
+  .src .i{font-family:var(--mono);color:var(--html);font-size:13px;flex:0 0 auto}
+  .src .t{color:var(--fg);font-size:15.5px;font-weight:500;line-height:1.4}
+  .src .u{display:block;color:var(--fg-dim);font-family:var(--mono);font-size:12px;margin-top:3px;word-break:break-all}
+  .endnote{margin-top:30px;font-size:14px;color:var(--fg-dim);font-family:var(--mono)}
+
+  /* nav controls */
+  .controls{position:fixed;bottom:0;left:0;right:0;z-index:20;display:flex;justify-content:space-between;align-items:center;padding:18px clamp(20px,4vw,56px)}
+  .dots{display:flex;gap:9px}
+  .dots button{width:9px;height:9px;border-radius:50%;border:0;background:rgba(255,255,255,.2);cursor:pointer;padding:0;transition:all .25s}
+  .dots button.on{background:var(--html);width:26px;border-radius:6px}
+  .arrows{display:flex;gap:10px}
+  .arrows button{width:46px;height:46px;border-radius:12px;border:1px solid var(--surface-line);background:var(--surface);color:var(--fg);font-size:20px;cursor:pointer;display:grid;place-items:center;transition:all .2s;font-family:var(--mono)}
+  .arrows button:hover:not(:disabled){border-color:var(--html);color:var(--html)}
+  .arrows button:disabled{opacity:.3;cursor:default}
+  .hint{position:fixed;bottom:78px;left:50%;transform:translateX(-50%);z-index:19;font-family:var(--mono);font-size:11px;color:var(--fg-dim);letter-spacing:.1em;transition:opacity .6s}
+
+  @media (max-width:720px){
+    .versus{grid-template-columns:1fr}
+    .slide{padding:84px 22px 96px}
+    .topbar .tag span{display:none}
+  }
+</style>
+</head>
+<body>
+  <div class="progress" id="progress"></div>
+  <header class="topbar">
+    <div class="tag"><b>&lt;html&gt;</b> <span>的不合理有效性 · 事件盤點</span></div>
+    <div class="counter"><b id="cur">01</b> / <span id="tot">08</span></div>
+  </header>
+
+  <main class="deck" id="deck">
+
+    <!-- 1 — COVER -->
+    <section class="slide cover active">
+      <div class="wrap">
+        <div class="eyebrow stagger">事件盤點 · 2026.05</div>
+        <h1 class="stagger"><span class="ueh">HTML 的</span><span class="ueh accent">不合理有效性</span></h1>
+        <p class="sub stagger">當 Anthropic 工程師主張 ——「<span class="md-c">捨棄 Markdown</span>，改用 HTML」</p>
+        <p class="en stagger">The Unreasonable Effectiveness of HTML — Thariq Shihipar, Anthropic</p>
+        <div class="meta stagger">
+          <span class="chip">整理：tinokuo</span>
+          <span class="chip">2026-06-23</span>
+          <span class="chip">本頁本身就是一份 HTML</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2 — WHAT HAPPENED -->
+    <section class="slide">
+      <div class="wrap">
+        <div class="eyebrow stagger">事件是什麼</div>
+        <h2 class="stagger">一篇文章，引爆了格式之爭</h2>
+        <p class="lead stagger">2026 年 5 月，<b style="color:var(--fg)">Thariq Shihipar</b>（Anthropic <span class="accent">Claude Code</span> 團隊技術成員）發表長文，主張停止把 Markdown 當成 AI 產出的預設格式。</p>
+        <div class="facts stagger">
+          <div class="fact"><div class="n">5 月</div><div class="l">2026 年發表〈The Unreasonable Effectiveness of HTML〉</div></div>
+          <div class="fact"><div class="n accent">440萬</div><div class="l">發布 16 小時內的瀏覽量</div></div>
+          <div class="fact"><div class="n">8,200</div><div class="l">按讚</div></div>
+          <div class="fact"><div class="n">15,700</div><div class="l">收藏，社群正反熱議</div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3 — THE CLAIM -->
+    <section class="slide">
+      <div class="wrap">
+        <div class="eyebrow stagger">核心主張</div>
+        <div class="claim stagger">「我已經幾乎不用 Markdown 了 —— 改用 <span class="accent">HTML</span>。」</div>
+        <div class="points">
+          <div class="point stagger"><span class="dot"></span><span>超過約 <b>100 行的 Markdown</b>，他坦言「幾乎讀不下去」。</span></div>
+          <div class="point stagger"><span class="dot"></span><span>這不只是個人偏好 —— <b>Anthropic 內部</b>已把 HTML 當成 plan、code review、設計系統、報告的<b>預設格式</b>。</span></div>
+          <div class="point stagger"><span class="dot"></span><span>想法很簡單：讓 Claude 直接產出能<b>排版、視覺化、可互動</b>的東西，而不是一堆純文字符號。</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4 — FIVE REASONS -->
+    <section class="slide">
+      <div class="wrap">
+        <div class="eyebrow stagger">他提出的五大理由</div>
+        <h2 class="stagger">為什麼是 HTML？</h2>
+        <div class="reasons stagger">
+          <div class="reason" data-n="1"><h3><i>01</i> 資訊密度</h3><p>表格、CSS、SVG 圖、程式碼、互動元件、圖片——通通塞進一份檔案。</p></div>
+          <div class="reason" data-n="2"><h3><i>02</i> 長文可讀性</h3><p>Markdown 過 100 行就難讀；HTML 有結構、分頁、插圖與響應式排版。</p></div>
+          <div class="reason" data-n="3"><h3><i>03</i> 易於分享</h3><p>一個連結就能看；Markdown 通常還得當附件寄。</p></div>
+          <div class="reason" data-n="4"><h3><i>04</i> 雙向互動</h3><p>滑桿、旋鈕、可編輯欄位、複製按鈕——讀者能動態探索內容。</p></div>
+          <div class="reason" data-n="5"><h3><i>05</i> 愉悅感</h3><p>讀一份精緻 HTML 的體驗，和盯著一堆 Markdown 符號完全不同。</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5 — CONTROVERSY -->
+    <section class="slide">
+      <div class="wrap">
+        <div class="eyebrow stagger">爭議與反方</div>
+        <h2 class="stagger">代價：token，以及「給機器讀」的場景</h2>
+        <div class="points">
+          <div class="point stagger"><span class="dot" style="background:var(--md)"></span><span><b class="md-c">Token 成本</b>：同內容 HTML 約是 Markdown 的 <b>2–3 倍</b>（3000 字文章：~2,800 → ~8,000 tokens）。</span></div>
+          <div class="point stagger"><span class="dot" style="background:var(--md)"></span><span><b class="md-c">機器理解 / RAG</b>：要模型「讀進去」時 Markdown 反而較好（表格抽取 60.7% vs 53.6%；RAG 準確率最多 +35%）。</span></div>
+          <div class="point stagger"><span class="dot" style="background:var(--md)"></span><span>社群出現反諷文〈The Unreasonable <b class="md-c">In</b>effectiveness of HTML〉等反駁。</span></div>
+          <div class="point stagger"><span class="dot"></span><span>作者本人<b>承認 token 代價</b>，但認為「表達力更強 + 讀者真的會去讀」值得——尤其 Opus 有 <b class="gold">100 萬</b> token 的 context。</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6 — CONSENSUS -->
+    <section class="slide">
+      <div class="wrap">
+        <div class="eyebrow stagger">社群共識（2025–2026）</div>
+        <h2 class="stagger">不是二選一，是看用途分工</h2>
+        <div class="versus stagger">
+          <div class="col md">
+            <div class="h">／／ Markdown 勝出</div>
+            <div class="when">當作模型「輸入」、通用指令</div>
+            <ul>
+              <li>省 token、成本低</li>
+              <li>可 diff、版本好管理</li>
+              <li>到處都能正常顯示</li>
+              <li>RAG / 結構化抽取較準</li>
+            </ul>
+          </div>
+          <div class="col html">
+            <div class="h">&lt;/&gt; HTML 勝出</div>
+            <div class="when">給「人」看的最終產出</div>
+            <ul>
+              <li>報告、簡報、結構豐富的文件</li>
+              <li>版面、色彩、視覺化</li>
+              <li>互動元件與分享連結</li>
+              <li>長文的可讀性</li>
+            </ul>
+          </div>
+        </div>
+        <p class="takeaway stagger">重點是<b>「配合產物的生命週期」</b>選格式，而不是替誰加冕。</p>
+      </div>
+    </section>
+
+    <!-- 7 — RELATION -->
+    <section class="slide">
+      <div class="wrap">
+        <div class="eyebrow stagger">與本專案的關聯</div>
+        <h2 class="stagger">這正好是「<span class="accent">HTML 簡報</span>」專案的立論基礎</h2>
+        <div class="points">
+          <div class="point stagger"><span class="dot"></span><span>「HTML 簡報」專案落在<b>「HTML 勝出」那一側</b>——給人看、要視覺與排版的最終產出。</span></div>
+          <div class="point stagger"><span class="dot"></span><span>Thariq 那篇，某種程度上就是這類做法的<b>「官方背書」</b>。</span></div>
+          <div class="point stagger"><span class="dot"></span><span>而你正在看的<b>這份簡報本身</b>，就是一份自包含、可互動的 HTML——以身作則。</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 8 — SOURCES -->
+    <section class="slide">
+      <div class="wrap">
+        <div class="eyebrow stagger">資料來源</div>
+        <h2 class="stagger">Sources</h2>
+        <div class="srclist">
+          <a class="src stagger" href="https://claude.com/blog/using-claude-code-the-unreasonable-effectiveness-of-html" target="_blank" rel="noopener"><span class="i">01</span><span><span class="t">Using Claude Code: The Unreasonable Effectiveness of HTML（Anthropic 官方原文）</span><span class="u">claude.com/blog/using-claude-code-the-unreasonable-effectiveness-of-html</span></span></a>
+          <a class="src stagger" href="https://simonwillison.net/2026/May/8/unreasonable-effectiveness-of-html/" target="_blank" rel="noopener"><span class="i">02</span><span><span class="t">Simon Willison 的整理與實測</span><span class="u">simonwillison.net/2026/May/8/unreasonable-effectiveness-of-html/</span></span></a>
+          <a class="src stagger" href="https://www.searchcans.com/blog/markdown-vs-html-llm-context-optimization-2026/" target="_blank" rel="noopener"><span class="i">03</span><span><span class="t">Markdown vs. HTML for LLM Context：效能與成本分析</span><span class="u">searchcans.com/blog/markdown-vs-html-llm-context-optimization-2026</span></span></a>
+        </div>
+        <p class="endnote stagger">// 用 ← → 或點兩側換頁　·　end of deck</p>
+      </div>
+    </section>
+
+  </main>
+
+  <div class="hint" id="hint">← → 換頁　·　點兩側　·　可滑動</div>
+  <div class="controls">
+    <div class="dots" id="dots"></div>
+    <div class="arrows">
+      <button id="prev" aria-label="上一頁">←</button>
+      <button id="next" aria-label="下一頁">→</button>
+    </div>
+  </div>
+
+<script>
+(function(){
+  var slides=[].slice.call(document.querySelectorAll('.slide'));
+  var n=slides.length, i=0;
+  var dotsWrap=document.getElementById('dots');
+  var prev=document.getElementById('prev'), next=document.getElementById('next');
+  var progress=document.getElementById('progress');
+  var cur=document.getElementById('cur'), tot=document.getElementById('tot');
+  var hint=document.getElementById('hint');
+  tot.textContent=String(n).padStart(2,'0');
+
+  for(var k=0;k<n;k++){(function(k){
+    var b=document.createElement('button');
+    b.setAttribute('aria-label','第 '+(k+1)+' 頁');
+    b.addEventListener('click',function(){go(k)});
+    dotsWrap.appendChild(b);
+  })(k)}
+  var dots=[].slice.call(dotsWrap.children);
+
+  function go(t){
+    if(t<0||t>=n||t===i)return;
+    slides[i].classList.remove('active');
+    i=t;
+    slides[i].classList.add('active');
+    render();
+  }
+  function render(){
+    dots.forEach(function(d,k){d.classList.toggle('on',k===i)});
+    progress.style.width=((i)/(n-1)*100)+'%';
+    cur.textContent=String(i+1).padStart(2,'0');
+    prev.disabled=(i===0);
+    next.disabled=(i===n-1);
+  }
+  function step(d){go(i+d)}
+
+  prev.addEventListener('click',function(){step(-1)});
+  next.addEventListener('click',function(){step(1)});
+
+  document.addEventListener('keydown',function(e){
+    if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '){e.preventDefault();step(1)}
+    else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();step(-1)}
+    else if(e.key==='Home'){go(0)}
+    else if(e.key==='End'){go(n-1)}
+  });
+
+  // click left/right thirds to navigate (ignore links/buttons)
+  document.getElementById('deck').addEventListener('click',function(e){
+    if(e.target.closest('a,button'))return;
+    var x=e.clientX/window.innerWidth;
+    if(x>0.66)step(1); else if(x<0.34)step(-1);
+  });
+
+  // touch swipe
+  var sx=0,sy=0;
+  document.addEventListener('touchstart',function(e){sx=e.touches[0].clientX;sy=e.touches[0].clientY},{passive:true});
+  document.addEventListener('touchend',function(e){
+    var dx=e.changedTouches[0].clientX-sx, dy=e.changedTouches[0].clientY-sy;
+    if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)){step(dx<0?1:-1)}
+  },{passive:true});
+
+  setTimeout(function(){hint.style.opacity='0'},4200);
+  render();
+})();
+</script>
+</body>
+</html>
