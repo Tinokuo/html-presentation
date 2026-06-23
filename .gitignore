@@ -30,3 +30,6 @@ desktop.ini
 # 暫存
 *.tmp
 *.bak
+
+# Claude Code 本機設定（預覽伺服器等，不入庫）
+.claude/
