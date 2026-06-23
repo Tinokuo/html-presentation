@@ -1,0 +1,32 @@
+# 相依套件
+node_modules/
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+
+# 環境變數 / 機密
+.env
+.env.*
+!.env.example
+
+# 建置產物
+dist/
+build/
+out/
+.next/
+
+# 日誌與快取
+*.log
+logs/
+.cache/
+
+# 作業系統 / 編輯器
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+
+# 暫存
+*.tmp
+*.bak
