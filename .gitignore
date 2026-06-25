@@ -33,3 +33,11 @@ desktop.ini
 
 # Claude Code 本機設定（預覽伺服器等，不入庫）
 .claude/
+
+# 其他任務的暫存／子產物（非本簡報專案，不入庫）
+_pptx_render/
+glt-2026-q2-review/
+
+# Draw 技能生成圖暫存（非簡報實際引用的 images/*.png，不入庫）
+images/generated/
+slides/generated/
